@@ -62,7 +62,7 @@ const Home = () => {
       </div>
 
       {/* Balance Card */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="flex items-center justify-between mb-2">
           <span className="text-card text-muted-foreground">Total Balance</span>
           <Button
@@ -84,7 +84,7 @@ const Home = () => {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4 mb-8">
-        <div className="neumorphic-sm rounded-2xl p-4 flex items-center">
+        <div className="clean-sm rounded-2xl p-4 flex items-center">
           <div className="bg-income/20 rounded-xl p-2 mr-3">
             <ArrowDownRight className="h-5 w-5 text-income" />
           </div>
@@ -93,7 +93,7 @@ const Home = () => {
             <div className="text-subtext text-muted-foreground">This month</div>
           </div>
         </div>
-        <div className="neumorphic-sm rounded-2xl p-4 flex items-center">
+        <div className="clean-sm rounded-2xl p-4 flex items-center">
           <div className="bg-expense/20 rounded-xl p-2 mr-3">
             <ArrowUpRight className="h-5 w-5 text-expense" />
           </div>
@@ -116,7 +116,7 @@ const Home = () => {
         </div>
 
         {recentTransactions.length === 0 ? (
-          <div className="neumorphic-sm rounded-2xl p-8 text-center">
+          <div className="clean-sm rounded-2xl p-8 text-center">
             <div className="text-muted-foreground text-body">
               No transactions yet
             </div>
@@ -129,7 +129,7 @@ const Home = () => {
             {recentTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="neumorphic-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+                className="clean-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-all"
                 onClick={() => navigate(`/transaction/${transaction.id}`)}
               >
                 <div className="flex items-center">

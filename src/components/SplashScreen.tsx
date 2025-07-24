@@ -10,7 +10,7 @@ const SplashScreen = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className={`text-center transition-all duration-1000 ${fadeIn ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-        <div className="neumorphic rounded-3xl p-12 mb-8 inline-block">
+        <div className="clean-card rounded-3xl p-12 mb-8 inline-block">
           <div className="w-20 h-20 bg-primary rounded-2xl flex items-center justify-center">
             <span className="text-3xl font-bold text-primary-foreground">₹</span>
           </div>

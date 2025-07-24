@@ -72,14 +72,14 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
         {/* Type Toggle */}
         <div className="flex gap-2 mb-6">
           <Button
-            variant={type === 'expense' ? "neumorphic-primary" : "neumorphic"}
+            variant={type === 'expense' ? "clean-primary" : "clean"}
             className="flex-1"
             onClick={() => setType('expense')}
           >
             Expense
           </Button>
           <Button
-            variant={type === 'income' ? "neumorphic-primary" : "neumorphic"}
+            variant={type === 'income' ? "clean-primary" : "clean"}
             className="flex-1"
             onClick={() => setType('income')}
           >
@@ -134,7 +134,7 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
 
         {/* Save Button */}
         <Button
-          variant="neumorphic-primary"
+          variant="clean-primary"
           className="w-full mt-6"
           onClick={handleSave}
         >

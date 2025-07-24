@@ -76,7 +76,7 @@ const People = () => {
       {/* Add Person Button */}
       <div className="mb-8">
         <Button
-          variant="neumorphic-primary"
+          variant="clean-primary"
           className="w-full"
           onClick={() => setShowAddForm(true)}
         >
@@ -87,7 +87,7 @@ const People = () => {
 
       {/* Add Person Form */}
       {showAddForm && (
-        <div className="neumorphic rounded-3xl p-6 mb-8">
+        <div className="clean-card rounded-3xl p-6 mb-8">
           <div className="space-y-4">
             <input
               type="text"
@@ -99,14 +99,14 @@ const People = () => {
             />
             <div className="flex gap-3">
               <Button
-                variant="neumorphic-primary"
+                variant="clean-primary"
                 className="flex-1"
                 onClick={handleAddPerson}
               >
                 Add
               </Button>
               <Button
-                variant="neumorphic"
+                variant="clean"
                 className="flex-1"
                 onClick={() => {
                   setShowAddForm(false);
@@ -122,7 +122,7 @@ const People = () => {
 
       {/* People List */}
       {people.length === 0 ? (
-        <div className="neumorphic-sm rounded-3xl p-8 text-center">
+        <div className="clean-sm rounded-3xl p-8 text-center">
           <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <div className="text-body text-foreground mb-2">No people added yet</div>
           <div className="text-subtext text-muted-foreground">
@@ -134,7 +134,7 @@ const People = () => {
           {people.map((person) => (
             <div
               key={person.id}
-              className="neumorphic-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+              className="clean-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-all"
               onClick={() => navigate(`/person/${person.id}`)}
             >
               <div className="flex items-center">
@@ -172,7 +172,7 @@ const People = () => {
 
       {/* Summary */}
       {people.length > 0 && (
-        <div className="neumorphic rounded-3xl p-6 mt-8">
+        <div className="clean-card rounded-3xl p-6 mt-8">
           <h3 className="text-card text-foreground mb-4">Summary</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">

@@ -28,7 +28,7 @@ const MainLayout = () => {
 
       {/* Floating Action Button */}
       <Button
-        variant="neumorphic-fab"
+        variant="clean-fab"
         size="fab"
         className="fixed bottom-24 right-6 z-10"
         onClick={() => setIsAddModalOpen(true)}

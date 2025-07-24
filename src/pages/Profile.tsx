@@ -112,7 +112,7 @@ const Profile = () => {
       </div>
 
       {/* User Info Card */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="flex items-center">
           <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mr-4">
             <span className="text-primary font-bold text-2xl">
@@ -127,7 +127,7 @@ const Profile = () => {
       </div>
 
       {/* App Stats */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="flex items-center justify-between mb-4">
           <span className="text-card text-foreground">Your Activity</span>
           <FileText className="h-5 w-5 text-primary" />
@@ -155,7 +155,7 @@ const Profile = () => {
           return (
             <div
               key={index}
-              className="neumorphic-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:shadow-md transition-shadow"
+              className="clean-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-all"
               onClick={item.onClick}
             >
               <div className="flex items-center">
@@ -174,7 +174,7 @@ const Profile = () => {
       </div>
 
       {/* Security Info */}
-      <div className="neumorphic-sm rounded-2xl p-4 mb-8 bg-primary/5">
+      <div className="clean-sm rounded-2xl p-4 mb-8 bg-primary/5">
         <div className="flex items-center">
           <Shield className="h-5 w-5 text-primary mr-3" />
           <div>

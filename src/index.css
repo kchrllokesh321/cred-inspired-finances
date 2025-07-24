@@ -122,26 +122,19 @@ All colors MUST be HSL. Neumorphic design with soft shadows and depth.
     @apply bg-background text-foreground font-poppins;
   }
 
-  /* Neumorphic component styles */
-  .neumorphic {
+  /* Clean component styles without shadows */
+  .clean-card {
     background: hsl(var(--card));
-    box-shadow: 
-      8px 8px 16px hsl(var(--shadow-dark)),
-      -8px -8px 16px hsl(var(--shadow-light));
+    border: 1px solid hsl(var(--border));
   }
 
-  .neumorphic-pressed {
-    background: hsl(var(--card));
-    box-shadow: 
-      inset 4px 4px 8px hsl(var(--shadow-inset-dark)),
-      inset -4px -4px 8px hsl(var(--shadow-inset-light));
+  .clean-pressed {
+    background: hsl(var(--muted));
   }
 
-  .neumorphic-sm {
+  .clean-sm {
     background: hsl(var(--card));
-    box-shadow: 
-      4px 4px 8px hsl(var(--shadow-dark)),
-      -4px -4px 8px hsl(var(--shadow-light));
+    border: 1px solid hsl(var(--border));
   }
 
   /* Typography classes */

@@ -124,7 +124,7 @@ const PersonDetail = () => {
         <div className="text-center mt-20">
           <div className="text-body text-foreground">Person not found</div>
           <Button
-            variant="neumorphic-primary"
+            variant="clean-primary"
             className="mt-4"
             onClick={() => navigate('/people')}
           >
@@ -151,7 +151,7 @@ const PersonDetail = () => {
       </div>
 
       {/* Balance Card */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="text-center">
           <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
             <span className="text-primary font-bold text-2xl">
@@ -171,7 +171,7 @@ const PersonDetail = () => {
 
       {/* Add Transaction Button */}
       <Button
-        variant="neumorphic-primary"
+        variant="clean-primary"
         className="w-full mb-8"
         onClick={() => setShowAddForm(true)}
       >
@@ -181,18 +181,18 @@ const PersonDetail = () => {
 
       {/* Add Transaction Form */}
       {showAddForm && (
-        <div className="neumorphic rounded-3xl p-6 mb-8">
+        <div className="clean-card rounded-3xl p-6 mb-8">
           <div className="space-y-4">
             <div className="flex gap-2">
               <Button
-                variant={newType === 'lent' ? "neumorphic-primary" : "neumorphic"}
+                variant={newType === 'lent' ? "clean-primary" : "clean"}
                 className="flex-1"
                 onClick={() => setNewType('lent')}
               >
                 I Lent Money
               </Button>
               <Button
-                variant={newType === 'borrowed' ? "neumorphic-primary" : "neumorphic"}
+                variant={newType === 'borrowed' ? "clean-primary" : "clean"}
                 className="flex-1"
                 onClick={() => setNewType('borrowed')}
               >
@@ -218,14 +218,14 @@ const PersonDetail = () => {
 
             <div className="flex gap-3">
               <Button
-                variant="neumorphic-primary"
+                variant="clean-primary"
                 className="flex-1"
                 onClick={handleAddTransaction}
               >
                 Add
               </Button>
               <Button
-                variant="neumorphic"
+                variant="clean"
                 className="flex-1"
                 onClick={() => {
                   setShowAddForm(false);
@@ -245,7 +245,7 @@ const PersonDetail = () => {
         <h2 className="text-card text-foreground mb-4">Transaction History</h2>
         
         {transactions.length === 0 ? (
-          <div className="neumorphic-sm rounded-2xl p-8 text-center">
+          <div className="clean-sm rounded-2xl p-8 text-center">
             <div className="text-body text-foreground mb-2">No transactions yet</div>
             <div className="text-subtext text-muted-foreground">
               Add a shared expense to get started
@@ -256,7 +256,7 @@ const PersonDetail = () => {
             {transactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="neumorphic-sm rounded-2xl p-4 flex items-center justify-between"
+                className="clean-sm rounded-2xl p-4 flex items-center justify-between"
               >
                 <div className="flex items-center">
                   <div className={`rounded-xl p-2 mr-3 ${

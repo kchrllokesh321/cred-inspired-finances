@@ -65,7 +65,7 @@ const TransactionDetail = () => {
         <div className="text-center mt-20">
           <div className="text-body text-foreground">Transaction not found</div>
           <Button
-            variant="neumorphic-primary"
+            variant="clean-primary"
             className="mt-4"
             onClick={() => navigate('/')}
           >
@@ -92,7 +92,7 @@ const TransactionDetail = () => {
       </div>
 
       {/* Transaction Card */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="text-center mb-6">
           <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
             transaction.type === 'income' ? 'bg-income/20' : 'bg-expense/20'
@@ -151,7 +151,7 @@ const TransactionDetail = () => {
       {/* Action Buttons */}
       <div className="space-y-4">
         <Button
-          variant="neumorphic"
+          variant="clean"
           className="w-full"
           onClick={() => {
             // Edit functionality would go here

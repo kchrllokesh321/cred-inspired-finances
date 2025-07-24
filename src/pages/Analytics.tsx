@@ -106,7 +106,7 @@ const Analytics = () => {
         ].map(({ key, label }) => (
           <Button
             key={key}
-            variant={selectedPeriod === key ? "neumorphic-primary" : "neumorphic"}
+            variant={selectedPeriod === key ? "clean-primary" : "clean"}
             className="flex-1"
             onClick={() => setSelectedPeriod(key as any)}
           >
@@ -117,7 +117,7 @@ const Analytics = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 gap-4 mb-8">
-        <div className="neumorphic rounded-3xl p-6">
+        <div className="clean-card rounded-3xl p-6">
           <div className="flex items-center justify-between mb-4">
             <span className="text-card text-muted-foreground">{getPeriodLabel()} Summary</span>
             <DollarSign className="h-5 w-5 text-primary" />
@@ -157,7 +157,7 @@ const Analytics = () => {
       </div>
 
       {/* Category Breakdown */}
-      <div className="neumorphic rounded-3xl p-6 mb-8">
+      <div className="clean-card rounded-3xl p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
           <span className="text-card text-foreground">Top Categories</span>
           <PieChart className="h-5 w-5 text-primary" />
@@ -195,7 +195,7 @@ const Analytics = () => {
       </div>
 
       {/* Transaction Count */}
-      <div className="neumorphic-sm rounded-2xl p-4 mb-8">
+      <div className="clean-sm rounded-2xl p-4 mb-8">
         <div className="text-center">
           <div className="text-display text-foreground">
             {filteredTransactions.length}
