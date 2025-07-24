@@ -2,41 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* The Expense Tracker Design System - CRED-inspired premium dark theme
+All colors MUST be HSL. Neumorphic design with soft shadows and depth.
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Primary dark theme colors */
+    --background: 210 3% 11%; /* #1C1C1E deep charcoal */
+    --foreground: 0 0% 95%; /* Light text */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 210 3% 17%; /* #2C2C2E component background */
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 210 3% 17%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 140 60% 70%; /* Soft green for positive amounts */
+    --primary-foreground: 210 3% 11%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 210 3% 20%; /* Slightly lighter for buttons */
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 3% 25%;
+    --muted-foreground: 0 0% 65%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 35 80% 70%; /* Soft orange for debts */
+    --accent-foreground: 210 3% 11%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 70% 60%;
+    --destructive-foreground: 0 0% 95%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 210 3% 25%;
+    --input: 210 3% 20%;
+    --ring: 140 60% 70%;
 
-    --radius: 0.5rem;
+    --radius: 1rem; /* Rounded for neumorphic feel */
+
+    /* Custom neumorphic shadows */
+    --shadow-light: 0 0% 25%; /* Lighter shadow for depth */
+    --shadow-dark: 0 0% 8%; /* Darker shadow for depth */
+    --shadow-inset-light: 0 0% 20%;
+    --shadow-inset-dark: 0 0% 5%;
+
+    /* Income/expense colors */
+    --income: 140 60% 70%; /* Soft green */
+    --expense: 0 70% 60%; /* Soft red */
+    --debt: 35 80% 70%; /* Soft orange */
+
+    /* Typography weights for Poppins */
+    --font-display: 700; /* Bold for main balance */
+    --font-title: 600; /* Semi-bold for screen titles */
+    --font-card: 500; /* Medium for card titles */
+    --font-body: 400; /* Regular for body text */
+    --font-button: 500; /* Medium for buttons */
 
     --sidebar-background: 0 0% 98%;
 
@@ -92,6 +111,7 @@ All colors MUST be HSL.
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+  }
 }
 
 @layer base {
@@ -100,6 +120,65 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-poppins;
+  }
+
+  /* Neumorphic component styles */
+  .neumorphic {
+    background: hsl(var(--card));
+    box-shadow: 
+      8px 8px 16px hsl(var(--shadow-dark)),
+      -8px -8px 16px hsl(var(--shadow-light));
+  }
+
+  .neumorphic-pressed {
+    background: hsl(var(--card));
+    box-shadow: 
+      inset 4px 4px 8px hsl(var(--shadow-inset-dark)),
+      inset -4px -4px 8px hsl(var(--shadow-inset-light));
+  }
+
+  .neumorphic-sm {
+    background: hsl(var(--card));
+    box-shadow: 
+      4px 4px 8px hsl(var(--shadow-dark)),
+      -4px -4px 8px hsl(var(--shadow-light));
+  }
+
+  /* Typography classes */
+  .text-display {
+    font-size: 2.5rem;
+    font-weight: var(--font-display);
+    line-height: 1.2;
+  }
+
+  .text-title {
+    font-size: 1.5rem;
+    font-weight: var(--font-title);
+    line-height: 1.3;
+  }
+
+  .text-card {
+    font-size: 1.125rem;
+    font-weight: var(--font-card);
+    line-height: 1.4;
+  }
+
+  .text-body {
+    font-size: 1rem;
+    font-weight: var(--font-body);
+    line-height: 1.5;
+  }
+
+  .text-subtext {
+    font-size: 0.875rem;
+    font-weight: var(--font-body);
+    line-height: 1.4;
+  }
+
+  .text-button {
+    font-size: 1rem;
+    font-weight: var(--font-button);
+    line-height: 1;
   }
 }
