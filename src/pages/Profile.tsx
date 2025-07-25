@@ -1,36 +1,76 @@
 import { useState } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  Lock, 
-  User, 
-  Download, 
-  LogOut, 
-  Settings, 
-  Shield,
-  ChevronRight,
-  FileText
-} from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { User, CreditCard, Download, LogOut, Shield, Settings, Activity, FileText, Lock, ChevronRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const [userName, setUserName] = useState(localStorage.getItem('userName') || 'User');
+  const [showPinDialog, setShowPinDialog] = useState(false);
+  const [newPin, setNewPin] = useState("");
   const { toast } = useToast();
 
+  const hashPin = async (pin: string): Promise<string> => {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(pin);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const handleSetPin = () => {
-    // Simple PIN setup for demo
-    const newPin = prompt("Enter a 4-digit PIN:");
-    if (newPin && newPin.length === 4 && !isNaN(Number(newPin))) {
-      localStorage.setItem('userPin', newPin);
+    setShowPinDialog(true);
+  };
+
+  const handlePinDigit = (digit: string) => {
+    if (newPin.length < 4) {
+      const updatedPin = newPin + digit;
+      setNewPin(updatedPin);
+      
+      if (updatedPin.length === 4) {
+        updatePin(updatedPin);
+      }
+    }
+  };
+
+  const updatePin = async (pin: string) => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      const hashedPin = await hashPin(pin);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          user_id: userId,
+          pin_hash: hashedPin
+        });
+
+      if (error) throw error;
+
       toast({
-        title: "PIN Set Successfully",
-        description: "Your PIN has been updated",
+        title: "PIN Updated",
+        description: "Your PIN has been successfully updated",
       });
-    } else if (newPin) {
+      
+      setShowPinDialog(false);
+      setNewPin("");
+    } catch (error) {
+      console.error('Error updating PIN:', error);
       toast({
-        title: "Invalid PIN",
-        description: "Please enter a 4-digit number",
+        title: "Error",
+        description: "Failed to update PIN. Please try again.",
         variant: "destructive",
       });
+      setNewPin("");
+    }
+  };
+
+  const handleDeletePin = () => {
+    if (newPin.length > 0) {
+      setNewPin(prev => prev.slice(0, -1));
     }
   };
 
@@ -46,33 +86,52 @@ const Profile = () => {
     }
   };
 
-  const handleExportData = () => {
-    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    const people = JSON.parse(localStorage.getItem('people') || '[]');
-    
-    const csvContent = [
-      ['Type', 'Date', 'Category', 'Amount', 'Notes'],
-      ...transactions.map((t: any) => [
-        t.type,
-        t.date,
-        t.category,
-        t.amount,
-        t.notes || ''
-      ])
-    ].map(row => row.join(',')).join('\n');
+  const handleExportData = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
 
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'expense-tracker-data.csv';
-    a.click();
-    window.URL.revokeObjectURL(url);
+      const { data: transactions } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId);
 
-    toast({
-      title: "Data Exported",
-      description: "Your data has been exported to CSV",
-    });
+      const { data: people } = await supabase
+        .from('people')
+        .select('*')
+        .eq('user_id', userId);
+
+      const csvContent = [
+        ['Type', 'Date', 'Category', 'Amount', 'Notes'],
+        ...(transactions || []).map((t: any) => [
+          t.type,
+          t.date,
+          t.category,
+          t.amount,
+          t.notes || ''
+        ])
+      ].map(row => row.join(',')).join('\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'expense-tracker-data.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Data Exported",
+        description: "Your data has been exported to CSV",
+      });
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to export data",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleLogout = () => {
@@ -134,15 +193,11 @@ const Profile = () => {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div className="text-center">
-            <div className="text-title text-foreground">
-              {JSON.parse(localStorage.getItem('transactions') || '[]').length}
-            </div>
+            <div className="text-title text-foreground">--</div>
             <div className="text-subtext text-muted-foreground">Transactions</div>
           </div>
           <div className="text-center">
-            <div className="text-title text-foreground">
-              {JSON.parse(localStorage.getItem('people') || '[]').length}
-            </div>
+            <div className="text-title text-foreground">--</div>
             <div className="text-subtext text-muted-foreground">People</div>
           </div>
         </div>
@@ -180,7 +235,7 @@ const Profile = () => {
           <div>
             <div className="text-body text-foreground font-medium">Data Privacy</div>
             <div className="text-subtext text-muted-foreground">
-              All your data is stored securely on your device
+              All your data is stored securely in the cloud
             </div>
           </div>
         </div>
@@ -205,6 +260,69 @@ const Profile = () => {
           Made with ❤️ by Lovable
         </div>
       </div>
+        
+      {/* PIN Update Dialog */}
+      <Dialog open={showPinDialog} onOpenChange={setShowPinDialog}>
+        <DialogContent className="w-full max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Change PIN</DialogTitle>
+            <DialogDescription>Enter a new 4-digit PIN</DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-6">
+            {/* PIN Dots */}
+            <div className="flex justify-center gap-4 mb-8">
+              {[0, 1, 2, 3].map((index) => (
+                <div
+                  key={index}
+                  className={`w-4 h-4 rounded-full border-2 transition-all duration-200 ${
+                    index < newPin.length 
+                      ? 'bg-primary border-primary shadow-lg' 
+                      : 'border-border bg-card'
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* PIN Keypad */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                ['1', '2', '3'],
+                ['4', '5', '6'],
+                ['7', '8', '9'],
+                ['', '0', 'delete']
+              ].flat().map((button, index) => {
+                if (button === '') return <div key={index} />;
+                
+                if (button === 'delete') {
+                  return (
+                    <Button
+                      key={index}
+                      variant="pin-button"
+                      size="pin"
+                      onClick={handleDeletePin}
+                      className="col-span-1"
+                    >
+                      ⌫
+                    </Button>
+                  );
+                }
+
+                return (
+                  <Button
+                    key={index}
+                    variant="pin-button"
+                    size="pin"
+                    onClick={() => handlePinDigit(button)}
+                  >
+                    {button}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

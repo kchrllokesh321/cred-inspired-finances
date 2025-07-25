@@ -1,58 +1,108 @@
+import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
-import MainLayout from "./components/MainLayout";
-import Home from "./pages/Home";
-import Analytics from "./pages/Analytics";
-import People from "./pages/People";
-import Profile from "./pages/Profile";
-import TransactionDetail from "./pages/TransactionDetail";
-import PersonDetail from "./pages/PersonDetail";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import type { User } from '@supabase/supabase-js';
+import MainLayout from "@/components/MainLayout";
+import Index from "@/pages/Index";
+import Home from "@/pages/Home";
+import Analytics from "@/pages/Analytics";
+import People from "@/pages/People";
+import PersonDetail from "@/pages/PersonDetail";
+import TransactionDetail from "@/pages/TransactionDetail";
+import Profile from "@/pages/Profile";
+import PinEntry from "@/components/PinEntry";
+import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setIsLoading(false);
+    const initializeUser = async () => {
+      try {
+        // First check if we have a user ID stored locally
+        const storedUserId = localStorage.getItem('userId');
+        
+        if (storedUserId) {
+          // Check if user exists in database
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', storedUserId)
+            .single();
+          
+          if (profile) {
+            setUser({ id: storedUserId } as User);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Create anonymous user in Supabase
+        const { data, error } = await supabase.auth.signInAnonymously();
+        
+        if (error) {
+          console.error('Error creating anonymous user:', error);
+          setLoading(false);
+          return;
+        }
+
+        if (data.user) {
+          localStorage.setItem('userId', data.user.id);
+          setUser(data.user);
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error);
+      } finally {
+        setLoading(false);
       }
-    );
+    };
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    initializeUser();
   }, []);
 
-  if (isLoading) {
+  const handlePinSuccess = () => {
+    setIsAuthenticated(true);
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
   }
 
+  // If user exists but not authenticated with PIN, show PIN entry
+  if (user && !isAuthenticated) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <PinEntry onSuccess={handlePinSuccess} />
+        </TooltipProvider>
+      </QueryClientProvider>
+    );
+  }
+
+  // If no user, something went wrong
   if (!user) {
-    return <Auth />;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-title text-foreground mb-2">Error</h1>
+          <p className="text-subtext text-muted-foreground">Unable to initialize app</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -70,7 +120,6 @@ const App = () => {
               <Route path="transaction/:id" element={<TransactionDetail />} />
               <Route path="person/:id" element={<PersonDetail />} />
             </Route>
-            <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
