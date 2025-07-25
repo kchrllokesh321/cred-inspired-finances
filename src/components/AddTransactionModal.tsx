@@ -4,21 +4,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { X, DollarSign, Tag, Calendar, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AddTransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onTransactionAdded: () => void;
 }
 
-const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
+const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }: AddTransactionModalProps) => {
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState("");
   const [type, setType] = useState<'income' | 'expense'>('expense');
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!amount || !category) {
       toast({
         title: "Missing Information",
@@ -28,32 +31,55 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
       return;
     }
 
-    // Save transaction logic here
-    const transaction = {
-      id: Date.now().toString(),
-      amount: parseFloat(amount),
-      category,
-      date,
-      notes,
-      type,
-      timestamp: new Date().toISOString(),
-    };
+    setIsLoading(true);
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to add transactions",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Store in localStorage for now
-    const existingTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    existingTransactions.unshift(transaction);
-    localStorage.setItem('transactions', JSON.stringify(existingTransactions));
+      const { error } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user.id,
+          amount: parseFloat(amount),
+          category,
+          date,
+          notes: notes || null,
+          type,
+        });
 
-    toast({
-      title: "Transaction Added",
-      description: `${type === 'income' ? 'Income' : 'Expense'} of ₹${amount} recorded`,
-    });
+      if (error) {
+        throw error;
+      }
 
-    // Reset form
-    setAmount("");
-    setCategory("");
-    setNotes("");
-    onClose();
+      toast({
+        title: "Transaction Added",
+        description: `${type === 'income' ? 'Income' : 'Expense'} of ₹${amount} recorded`,
+      });
+
+      // Reset form
+      setAmount("");
+      setCategory("");
+      setNotes("");
+      onTransactionAdded();
+      onClose();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -137,8 +163,9 @@ const AddTransactionModal = ({ isOpen, onClose }: AddTransactionModalProps) => {
           variant="clean-primary"
           className="w-full mt-6"
           onClick={handleSave}
+          disabled={isLoading}
         >
-          Save Transaction
+          {isLoading ? "Saving..." : "Save Transaction"}
         </Button>
       </div>
     </div>

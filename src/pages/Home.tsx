@@ -2,29 +2,58 @@ import { useState, useEffect } from "react";
 import { ArrowUpRight, ArrowDownRight, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Transaction {
   id: string;
   amount: number;
   category: string;
   date: string;
-  notes: string;
+  notes: string | null;
   type: 'income' | 'expense';
-  timestamp: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
 }
 
 const Home = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load transactions from localStorage
-    const stored = localStorage.getItem('transactions');
-    if (stored) {
-      setTransactions(JSON.parse(stored));
-    }
+    loadTransactions();
   }, []);
+
+  const loadTransactions = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading transactions:', error);
+        return;
+      }
+
+      const mappedTransactions = (data || []).map(transaction => ({
+        ...transaction,
+        notes: transaction.notes || '',
+        type: transaction.type as 'income' | 'expense',
+      }));
+      setTransactions(mappedTransactions);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const calculateBalance = () => {
     return transactions.reduce((balance, transaction) => {

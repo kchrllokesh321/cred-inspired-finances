@@ -4,8 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState, useEffect } from "react";
-import SplashScreen from "./components/SplashScreen";
-import PinEntry from "./components/PinEntry";
+import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from "@supabase/supabase-js";
 import MainLayout from "./components/MainLayout";
 import Home from "./pages/Home";
 import Analytics from "./pages/Analytics";
@@ -13,39 +13,46 @@ import People from "./pages/People";
 import Profile from "./pages/Profile";
 import TransactionDetail from "./pages/TransactionDetail";
 import PersonDetail from "./pages/PersonDetail";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [hasPin, setHasPin] = useState(false);
 
   useEffect(() => {
-    // Simulate splash screen delay and check for PIN
-    const timer = setTimeout(() => {
-      const storedPin = localStorage.getItem('userPin');
-      setHasPin(!!storedPin);
-      setIsLoading(false);
-      if (!storedPin) {
-        setIsAuthenticated(true); // No PIN required, go directly to app
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
       }
-    }, 2500);
+    );
 
-    return () => clearTimeout(timer);
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const handlePinSuccess = () => {
-    setIsAuthenticated(true);
-  };
-
   if (isLoading) {
-    return <SplashScreen />;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  if (hasPin && !isAuthenticated) {
-    return <PinEntry onSuccess={handlePinSuccess} />;
+  if (!user) {
+    return <Auth />;
   }
 
   return (
@@ -63,6 +70,7 @@ const App = () => {
               <Route path="transaction/:id" element={<TransactionDetail />} />
               <Route path="person/:id" element={<PersonDetail />} />
             </Route>
+            <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

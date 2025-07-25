@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Users, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Person {
   id: string;
@@ -14,31 +15,70 @@ const People = () => {
   const [people, setPeople] = useState<Person[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPersonName, setNewPersonName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = localStorage.getItem('people');
-    if (stored) {
-      setPeople(JSON.parse(stored));
-    }
+    loadPeople();
   }, []);
 
-  const handleAddPerson = () => {
+  const loadPeople = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from('people')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading people:', error);
+        return;
+      }
+
+      const mappedPeople = (data || []).map(person => ({
+        id: person.id,
+        name: person.name,
+        balance: person.balance,
+        lastTransaction: person.updated_at,
+      }));
+
+      setPeople(mappedPeople);
+    } catch (error) {
+      console.error('Error loading people:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddPerson = async () => {
     if (!newPersonName.trim()) return;
 
-    const newPerson: Person = {
-      id: Date.now().toString(),
-      name: newPersonName.trim(),
-      balance: 0,
-      lastTransaction: new Date().toISOString(),
-    };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const updatedPeople = [...people, newPerson];
-    setPeople(updatedPeople);
-    localStorage.setItem('people', JSON.stringify(updatedPeople));
-    
-    setNewPersonName("");
-    setShowAddForm(false);
+      const { error } = await supabase
+        .from('people')
+        .insert({
+          user_id: user.id,
+          name: newPersonName.trim(),
+          balance: 0,
+        });
+
+      if (error) {
+        console.error('Error adding person:', error);
+        return;
+      }
+
+      setNewPersonName("");
+      setShowAddForm(false);
+      loadPeople(); // Refresh the list
+    } catch (error) {
+      console.error('Error adding person:', error);
+    }
   };
 
   const formatCurrency = (amount: number) => {

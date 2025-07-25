@@ -7,6 +7,7 @@ import AddTransactionModal from "./AddTransactionModal";
 const MainLayout = () => {
   const location = useLocation();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const navItems = [
     { icon: Home, label: "Home", path: "/" },
@@ -17,6 +18,12 @@ const MainLayout = () => {
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const handleTransactionAdded = () => {
+    setRefreshKey(prev => prev + 1);
+    // Trigger a page refresh or data reload
+    window.location.reload();
   };
 
   return (
@@ -64,7 +71,8 @@ const MainLayout = () => {
       {/* Add Transaction Modal */}
       <AddTransactionModal 
         isOpen={isAddModalOpen} 
-        onClose={() => setIsAddModalOpen(false)} 
+        onClose={() => setIsAddModalOpen(false)}
+        onTransactionAdded={handleTransactionAdded}
       />
     </div>
   );
