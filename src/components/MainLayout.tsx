@@ -26,15 +26,17 @@ const MainLayout = () => {
         <Outlet />
       </main>
 
-      {/* Floating Action Button */}
-      <Button
-        variant="clean-fab"
-        size="fab"
-        className="fixed bottom-24 right-6 z-10"
-        onClick={() => setIsAddModalOpen(true)}
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+      {/* Floating Action Button - Only on Home Screen */}
+      {location.pathname === "/" && (
+        <Button
+          variant="clean-fab"
+          size="fab"
+          className="fixed bottom-24 right-6 z-10"
+          onClick={() => setIsAddModalOpen(true)}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
 
       {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">

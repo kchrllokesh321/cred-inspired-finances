@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, TrendingDown, DollarSign, PieChart } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign, PieChart, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { useNavigate } from "react-router-dom";
 
 interface Transaction {
   id: string;
@@ -13,6 +15,8 @@ interface Transaction {
 const Analytics = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | '30days' | 'year'>('30days');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const navigate = useNavigate();
 
   useEffect(() => {
     const stored = localStorage.getItem('transactions');
@@ -72,6 +76,43 @@ const Analytics = () => {
   const categoryData = getCategoryData();
   const maxCategoryAmount = Math.max(...categoryData.map(c => c.amount), 1);
 
+  const getChartData = () => {
+    const dailyData = new Map<string, { income: number; expense: number }>();
+    
+    filteredTransactions.forEach(t => {
+      const date = new Date(t.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!dailyData.has(date)) {
+        dailyData.set(date, { income: 0, expense: 0 });
+      }
+      
+      const dayData = dailyData.get(date)!;
+      if (t.type === 'income') {
+        dayData.income += t.amount;
+      } else {
+        dayData.expense += t.amount;
+      }
+    });
+
+    return Array.from(dailyData.entries())
+      .map(([date, data]) => ({ date, ...data }))
+      .slice(-7); // Last 7 data points for readability
+  };
+
+  const getPieChartData = () => {
+    return categoryData.map((item, index) => ({
+      ...item,
+      fill: `hsl(${(index * 60) % 360}, 70%, 60%)`
+    }));
+  };
+
+  const getFilteredTransactionsList = () => {
+    let filtered = filteredTransactions;
+    if (selectedFilter !== 'all') {
+      filtered = filtered.filter(t => t.type === selectedFilter);
+    }
+    return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -100,9 +141,9 @@ const Analytics = () => {
       {/* Period Filter */}
       <div className="flex gap-2 mb-8">
         {[
-          { key: 'day', label: 'Day' },
-          { key: '30days', label: '30 Days' },
-          { key: 'year', label: 'Year' }
+          { key: 'day', label: 'Today' },
+          { key: '30days', label: 'Last 30 Days' },
+          { key: 'year', label: 'This Year' }
         ].map(({ key, label }) => (
           <Button
             key={key}
@@ -113,6 +154,9 @@ const Analytics = () => {
             {label}
           </Button>
         ))}
+        <Button variant="clean" className="h-10 w-10 p-0">
+          <Calendar className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -156,37 +200,146 @@ const Analytics = () => {
         </div>
       </div>
 
-      {/* Category Breakdown */}
-      <div className="clean-card rounded-3xl p-6 mb-8">
-        <div className="flex items-center justify-between mb-6">
-          <span className="text-card text-foreground">Top Categories</span>
-          <PieChart className="h-5 w-5 text-primary" />
+      {/* Charts Section */}
+      <div className="space-y-6 mb-8">
+        {/* Line Chart */}
+        <div className="clean-card rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-card text-foreground">Spending Trends</span>
+            <TrendingUp className="h-5 w-5 text-primary" />
+          </div>
+          <div className="h-48">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={getChartData()}>
+                <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <Line 
+                  type="monotone" 
+                  dataKey="expense" 
+                  stroke="hsl(var(--expense))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--expense))" }}
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="income" 
+                  stroke="hsl(var(--income))" 
+                  strokeWidth={2}
+                  dot={{ fill: "hsl(var(--income))" }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </div>
 
-        {categoryData.length === 0 ? (
+        {/* Pie Chart */}
+        <div className="clean-card rounded-3xl p-6">
+          <div className="flex items-center justify-between mb-6">
+            <span className="text-card text-foreground">Category Breakdown</span>
+            <PieChart className="h-5 w-5 text-primary" />
+          </div>
+          {categoryData.length === 0 ? (
+            <div className="text-center py-8">
+              <div className="text-muted-foreground text-body">No expense data</div>
+              <div className="text-subtext text-muted-foreground mt-1">
+                Add some transactions to see insights
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {categoryData.map(({ category, amount }) => (
+                <div key={category} className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-body text-foreground capitalize">{category}</span>
+                    <span className="text-body text-foreground font-medium">
+                      {formatCurrency(amount)}
+                    </span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-primary h-2 rounded-full transition-all duration-300"
+                      style={{
+                        width: `${(amount / maxCategoryAmount) * 100}%`
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Transaction Filters */}
+      <div className="clean-card rounded-3xl p-6 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <span className="text-card text-foreground">Transactions</span>
+          <span className="text-subtext text-muted-foreground">
+            {getFilteredTransactionsList().length} transactions
+          </span>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex gap-2 mb-6">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'income', label: 'Income' },
+            { key: 'expense', label: 'Expenses' }
+          ].map(({ key, label }) => (
+            <Button
+              key={key}
+              variant={selectedFilter === key ? "clean-primary" : "clean"}
+              size="sm"
+              onClick={() => setSelectedFilter(key as any)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+
+        {/* Transaction List */}
+        {getFilteredTransactionsList().length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-muted-foreground text-body">No expense data</div>
+            <div className="text-muted-foreground text-body">No transactions found</div>
             <div className="text-subtext text-muted-foreground mt-1">
-              Add some transactions to see insights
+              Try adjusting your filters
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {categoryData.map(({ category, amount }) => (
-              <div key={category} className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-body text-foreground capitalize">{category}</span>
-                  <span className="text-body text-foreground font-medium">
-                    {formatCurrency(amount)}
-                  </span>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {getFilteredTransactionsList().map((transaction) => (
+              <div
+                key={transaction.id}
+                className="clean-sm rounded-2xl p-4 flex items-center justify-between cursor-pointer hover:bg-secondary/50 transition-all"
+                onClick={() => navigate(`/transaction/${transaction.id}`)}
+              >
+                <div className="flex items-center">
+                  <div className={`rounded-xl p-2 mr-3 ${
+                    transaction.type === 'income' 
+                      ? 'bg-income/20' 
+                      : 'bg-expense/20'
+                  }`}>
+                    {transaction.type === 'income' ? (
+                      <ArrowDownRight className="h-4 w-4 text-income" />
+                    ) : (
+                      <ArrowUpRight className="h-4 w-4 text-expense" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-body text-foreground">{transaction.category}</div>
+                    <div className="text-subtext text-muted-foreground">
+                      {new Date(transaction.date).toLocaleDateString('en-IN', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric'
+                      })}
+                    </div>
+                  </div>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-primary h-2 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${(amount / maxCategoryAmount) * 100}%`
-                    }}
-                  />
+                <div className={`text-body font-medium ${
+                  transaction.type === 'income' ? 'text-income' : 'text-expense'
+                }`}>
+                  {transaction.type === 'income' ? '+' : '-'}{formatCurrency(transaction.amount)}
                 </div>
               </div>
             ))}
@@ -194,17 +347,6 @@ const Analytics = () => {
         )}
       </div>
 
-      {/* Transaction Count */}
-      <div className="clean-sm rounded-2xl p-4 mb-8">
-        <div className="text-center">
-          <div className="text-display text-foreground">
-            {filteredTransactions.length}
-          </div>
-          <div className="text-subtext text-muted-foreground">
-            Total transactions in {getPeriodLabel().toLowerCase()}
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

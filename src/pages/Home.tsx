@@ -37,6 +37,26 @@ const Home = () => {
   const balance = calculateBalance();
   const recentTransactions = transactions.slice(0, 10);
 
+  const getCurrentMonthTransactions = () => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+    
+    return transactions.filter(t => {
+      const transactionDate = new Date(t.date);
+      return transactionDate.getMonth() === currentMonth && 
+             transactionDate.getFullYear() === currentYear;
+    });
+  };
+
+  const currentMonthTransactions = getCurrentMonthTransactions();
+  const monthlyIncome = currentMonthTransactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0);
+  const monthlyExpenses = currentMonthTransactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0);
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
@@ -82,7 +102,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Monthly Summary Cards */}
       <div className="grid grid-cols-2 gap-4 mb-8">
         <div className="clean-sm rounded-2xl p-4 flex items-center">
           <div className="bg-income/20 rounded-xl p-2 mr-3">
@@ -91,6 +111,9 @@ const Home = () => {
           <div>
             <div className="text-card text-foreground">Income</div>
             <div className="text-subtext text-muted-foreground">This month</div>
+            <div className="text-body text-income font-medium mt-1">
+              {formatCurrency(monthlyIncome)}
+            </div>
           </div>
         </div>
         <div className="clean-sm rounded-2xl p-4 flex items-center">
@@ -100,6 +123,9 @@ const Home = () => {
           <div>
             <div className="text-card text-foreground">Expenses</div>
             <div className="text-subtext text-muted-foreground">This month</div>
+            <div className="text-body text-expense font-medium mt-1">
+              {formatCurrency(monthlyExpenses)}
+            </div>
           </div>
         </div>
       </div>
