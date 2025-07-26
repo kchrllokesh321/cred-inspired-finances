@@ -35,25 +35,25 @@ export const UsernameEntry: React.FC<UsernameEntryProps> = ({ onSuccess }) => {
     setLoading(true);
 
     try {
-      // First, create or find the user via the database function
+      // First, sign in anonymously to create auth session
+      const { data: authData, error: authError } = await supabase.auth.signInAnonymously({
+        options: {
+          data: {
+            username: username.trim()
+          }
+        }
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('No user created');
+
+      // Now find or create the profile with the authenticated user
       const { data: userId, error: userError } = await supabase.rpc('find_or_create_user_by_username', {
         input_username: username.trim()
       });
 
       if (userError) throw userError;
       if (!userId) throw new Error('No user ID returned');
-
-      // Now sign in anonymously with this user ID
-      const { data: authData, error: authError } = await supabase.auth.signInAnonymously({
-        options: {
-          data: {
-            username: username.trim(),
-            user_id: userId
-          }
-        }
-      });
-
-      if (authError) throw authError;
 
       // Store username in localStorage for UI purposes
       localStorage.setItem('username', username.trim());

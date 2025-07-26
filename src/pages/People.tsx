@@ -26,29 +26,8 @@ const People = () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        // Fallback to localStorage if no session (during transition)
-        const userId = localStorage.getItem('userId');
-        if (!userId) return;
-
-        const { data, error } = await supabase
-          .from('people')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error loading people:', error);
-          return;
-        }
-
-        const mappedPeople = (data || []).map(person => ({
-          id: person.id,
-          name: person.name,
-          balance: person.balance,
-          lastTransaction: person.updated_at,
-        }));
-
-        setPeople(mappedPeople);
+        console.log('No authenticated user found');
+        setPeople([]);
         return;
       }
 
@@ -83,18 +62,15 @@ const People = () => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      let userId = user?.id;
-      
-      if (!userId) {
-        // Fallback to localStorage during transition
-        userId = localStorage.getItem('userId');
-        if (!userId) return;
+      if (!user) {
+        console.error('No authenticated user found');
+        return;
       }
 
       const { error } = await supabase
         .from('people')
         .insert({
-          user_id: userId,
+          user_id: user.id,
           name: newPersonName.trim(),
           balance: 0,
         });
