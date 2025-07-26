@@ -29,27 +29,50 @@ const App = () => {
   useEffect(() => {
     const initializeUser = async () => {
       try {
-        // Check if user exists in localStorage
-        const storedUserId = localStorage.getItem('userId');
-        const storedUsername = localStorage.getItem('username');
+        // Check for existing Supabase session first
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (storedUserId && storedUsername) {
-          setUser(storedUserId);
+        if (session?.user) {
+          // User has a valid session
+          const storedUsername = localStorage.getItem('username');
+          setUser(session.user.id);
           setUsername(storedUsername);
-          setLoading(false);
-          return;
+          setNeedsUsername(false);
+        } else {
+          // No session, check if we have stored credentials
+          const storedUserId = localStorage.getItem('userId');
+          const storedUsername = localStorage.getItem('username');
+          
+          if (storedUserId && storedUsername) {
+            // Try to restore session or create new one
+            setUser(storedUserId);
+            setUsername(storedUsername);
+            setNeedsUsername(false);
+          } else {
+            setNeedsUsername(true);
+          }
         }
-
-        // If no stored user, show username entry
-        setNeedsUsername(true);
       } catch (error) {
         console.error('Error initializing user:', error);
+        setNeedsUsername(true);
       } finally {
         setLoading(false);
       }
     };
 
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (session?.user) {
+          setUser(session.user.id);
+          setNeedsUsername(false);
+        }
+      }
+    );
+
     initializeUser();
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleUsernameSuccess = (userId: string, username: string) => {
