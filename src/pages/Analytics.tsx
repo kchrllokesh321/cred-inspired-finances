@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Cell, BarChart, Bar } from 'recharts';
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -26,13 +26,14 @@ const Analytics = () => {
 
   const fetchTransactions = async () => {
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) return;
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
 
       if (error) throw error;
@@ -239,32 +240,28 @@ const Analytics = () => {
 
       {/* Charts Section */}
       <div className="space-y-6 mb-8">
-        {/* Line Chart */}
+        {/* Bar Chart */}
         <div className="clean-card rounded-3xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <span className="text-card text-foreground">Spending Trends</span>
+            <span className="text-card text-foreground">Income vs Expenses</span>
             <TrendingUp className="h-5 w-5 text-primary" />
           </div>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={getChartData()}>
+              <BarChart data={getChartData()}>
                 <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                <Line 
-                  type="monotone" 
-                  dataKey="expense" 
-                  stroke="hsl(var(--expense))" 
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--expense))" }}
-                />
-                <Line 
-                  type="monotone" 
+                <Bar 
                   dataKey="income" 
-                  stroke="hsl(var(--income))" 
-                  strokeWidth={2}
-                  dot={{ fill: "hsl(var(--income))" }}
+                  fill="hsl(var(--income))" 
+                  radius={[4, 4, 0, 0]}
                 />
-              </LineChart>
+                <Bar 
+                  dataKey="expense" 
+                  fill="hsl(var(--expense))" 
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
