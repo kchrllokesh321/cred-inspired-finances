@@ -1,7 +1,8 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { ArrowLeft, Plus, ArrowUpRight, ArrowDownRight, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -138,6 +139,45 @@ const PersonDetail = () => {
       toast({
         title: "Error",
         description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDeleteTransaction = async (transactionId: string) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to delete transactions",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const { error } = await supabase
+        .from('shared_transactions')
+        .delete()
+        .eq('id', transactionId)
+        .eq('user_id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Transaction Deleted",
+        description: "Transaction has been removed successfully",
+      });
+
+      // Reload data to get updated balance and transactions
+      await loadPersonData();
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transaction. Please try again.",
         variant: "destructive",
       });
     }
@@ -326,7 +366,7 @@ const PersonDetail = () => {
                 key={transaction.id}
                 className="clean-sm rounded-2xl p-4 flex items-center justify-between"
               >
-                <div className="flex items-center">
+                <div className="flex items-center flex-1">
                   <div className={`rounded-xl p-2 mr-3 ${
                     transaction.type === 'lent' ? 'bg-income/20' : 'bg-debt/20'
                   }`}>
@@ -336,17 +376,47 @@ const PersonDetail = () => {
                       <ArrowDownRight className="h-4 w-4 text-debt" />
                     )}
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <div className="text-body text-foreground">{transaction.description}</div>
                     <div className="text-subtext text-muted-foreground">
                       {formatDate(transaction.date)} • {transaction.type === 'lent' ? 'You lent' : 'You borrowed'}
                     </div>
                   </div>
                 </div>
-                <div className={`text-body font-medium ${
-                  transaction.type === 'lent' ? 'text-income' : 'text-debt'
-                }`}>
-                  {transaction.type === 'lent' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                <div className="flex items-center gap-3">
+                  <div className={`text-body font-medium ${
+                    transaction.type === 'lent' ? 'text-income' : 'text-debt'
+                  }`}>
+                    {transaction.type === 'lent' ? '+' : '-'}{formatCurrency(transaction.amount)}
+                  </div>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Transaction</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete this transaction?
+                          <br />
+                          <strong>{transaction.description}</strong> - {formatCurrency(transaction.amount)}
+                          <br />
+                          This action cannot be undone and will update the balance.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDeleteTransaction(transaction.id)}
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             ))}
