@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { TrendingUp, TrendingDown, DollarSign, PieChart, Calendar, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, PieChart as RechartsPieChart, Cell } from 'recharts';
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Transaction {
   id: string;
@@ -16,14 +17,36 @@ const Analytics = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedPeriod, setSelectedPeriod] = useState<'day' | '30days' | 'year'>('30days');
   const [selectedFilter, setSelectedFilter] = useState<'all' | 'income' | 'expense'>('all');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const stored = localStorage.getItem('transactions');
-    if (stored) {
-      setTransactions(JSON.parse(stored));
-    }
+    fetchTransactions();
   }, []);
+
+  const fetchTransactions = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      const mappedTransactions = (data || []).map(transaction => ({
+        ...transaction,
+        type: transaction.type as 'income' | 'expense',
+      }));
+      setTransactions(mappedTransactions);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filterTransactionsByPeriod = () => {
     const now = new Date();
@@ -129,6 +152,20 @@ const Analytics = () => {
       default: return 'Last 30 Days';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background px-6 pt-8">
+        <div className="mb-8">
+          <h1 className="text-title text-foreground mb-2">Analytics</h1>
+          <p className="text-subtext text-muted-foreground">Your spending insights</p>
+        </div>
+        <div className="text-center mt-20">
+          <div className="text-body text-foreground">Loading your analytics...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background px-6 pt-8">

@@ -2,34 +2,79 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Edit, Trash2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Transaction {
   id: string;
   amount: number;
   category: string;
   date: string;
-  notes: string;
+  notes: string | null;
   type: 'income' | 'expense';
-  timestamp: string;
+  created_at: string;
 }
 
 const TransactionDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [transaction, setTransaction] = useState<Transaction | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-    const found = transactions.find((t: Transaction) => t.id === id);
-    setTransaction(found || null);
+    fetchTransaction();
   }, [id]);
 
-  const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this transaction?")) {
-      const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
-      const updated = transactions.filter((t: Transaction) => t.id !== id);
-      localStorage.setItem('transactions', JSON.stringify(updated));
+  const fetchTransaction = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId || !id) return;
+
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      const mappedTransaction = {
+        ...data,
+        type: data.type as 'income' | 'expense',
+      };
+      setTransaction(mappedTransaction);
+    } catch (error) {
+      console.error('Error fetching transaction:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!transaction || !confirm("Are you sure you want to delete this transaction?")) return;
+    
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('id', transaction.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Transaction Deleted",
+        description: "Transaction has been successfully deleted",
+      });
+      
       navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Error deleting transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete transaction. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -58,6 +103,16 @@ const TransactionDetail = () => {
       minute: '2-digit',
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background px-6 pt-8">
+        <div className="text-center mt-20">
+          <div className="text-body text-foreground">Loading transaction...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!transaction) {
     return (
@@ -133,7 +188,7 @@ const TransactionDetail = () => {
           <div className="flex justify-between items-center py-3 border-b border-border">
             <span className="text-body text-muted-foreground">Time</span>
             <span className="text-body text-foreground font-medium">
-              {formatTime(transaction.timestamp)}
+              {formatTime(transaction.created_at)}
             </span>
           </div>
 

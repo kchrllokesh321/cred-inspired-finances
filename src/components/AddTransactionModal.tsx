@@ -34,11 +34,11 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }: AddTransac
     setIsLoading(true);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const userId = localStorage.getItem('userId');
       
-      if (!user) {
+      if (!userId) {
         toast({
-          title: "Authentication Error",
+          title: "Authentication Error", 
           description: "Please sign in to add transactions",
           variant: "destructive",
         });
@@ -48,7 +48,7 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }: AddTransac
       const { error } = await supabase
         .from('transactions')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           amount: parseFloat(amount),
           category,
           date,
