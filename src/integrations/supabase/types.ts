@@ -46,6 +46,7 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          pin_enabled: boolean | null
           pin_hash: string | null
           updated_at: string
           user_id: string
@@ -55,6 +56,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          pin_enabled?: boolean | null
           pin_hash?: string | null
           updated_at?: string
           user_id: string
@@ -64,6 +66,7 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          pin_enabled?: boolean | null
           pin_hash?: string | null
           updated_at?: string
           user_id?: string
@@ -156,7 +159,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      find_or_create_user_by_username: {
+        Args: { input_username: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

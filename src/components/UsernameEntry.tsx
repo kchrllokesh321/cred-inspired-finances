@@ -44,7 +44,7 @@ export const UsernameEntry: React.FC<UsernameEntryProps> = ({ onSuccess }) => {
 
       // Store username and user ID in localStorage
       localStorage.setItem('username', username.trim());
-      localStorage.setItem('userId', data);
+      localStorage.setItem('userId', data as string);
       
       toast.success('Welcome!');
       onSuccess(data, username.trim());
