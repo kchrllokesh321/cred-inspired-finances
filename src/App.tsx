@@ -12,6 +12,7 @@ import Analytics from "@/pages/Analytics";
 import People from "@/pages/People";
 import PersonDetail from "@/pages/PersonDetail";
 import TransactionDetail from "@/pages/TransactionDetail";
+import EditTransaction from "@/pages/EditTransaction";
 import Profile from "@/pages/Profile";
 import PinEntry from "@/components/PinEntry";
 import { UsernameEntry } from "@/components/UsernameEntry";
@@ -142,6 +143,7 @@ const App = () => {
               <Route path="people" element={<People />} />
               <Route path="profile" element={<Profile />} />
               <Route path="transaction/:id" element={<TransactionDetail />} />
+              <Route path="edit-transaction/:id" element={<EditTransaction />} />
               <Route path="person/:id" element={<PersonDetail />} />
             </Route>
             <Route path="*" element={<NotFound />} />
