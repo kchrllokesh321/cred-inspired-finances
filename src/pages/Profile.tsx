@@ -68,11 +68,11 @@ const Profile = () => {
       
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          user_id: userId,
+        .update({
           pin_hash: hashedPin,
           pin_enabled: true
-        });
+        })
+        .eq('user_id', userId);
 
       if (error) throw error;
 
@@ -81,6 +81,7 @@ const Profile = () => {
         description: "Your PIN has been successfully updated",
       });
       
+      setIsPinEnabled(true);
       setShowPinDialog(false);
       setNewPin("");
     } catch (error) {
