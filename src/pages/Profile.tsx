@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -14,9 +14,9 @@ const Profile = () => {
   const [newPin, setNewPin] = useState("");
   const { toast } = useToast();
 
-  useState(() => {
+  useEffect(() => {
     checkPinStatus();
-  });
+  }, []);
 
   const checkPinStatus = async () => {
     try {
