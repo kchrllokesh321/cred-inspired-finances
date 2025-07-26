@@ -2,6 +2,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Person {
   id: string;
@@ -29,60 +31,116 @@ const PersonDetail = () => {
   const [newAmount, setNewAmount] = useState("");
   const [newDescription, setNewDescription] = useState("");
   const [newType, setNewType] = useState<'lent' | 'borrowed'>('lent');
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Load person data
-    const people = JSON.parse(localStorage.getItem('people') || '[]');
-    const found = people.find((p: Person) => p.id === id);
-    setPerson(found || null);
-
-    // Load shared transactions
-    const sharedTransactions = JSON.parse(localStorage.getItem('sharedTransactions') || '[]');
-    const personTransactions = sharedTransactions.filter((t: SharedTransaction) => t.personId === id);
-    setTransactions(personTransactions);
+    loadPersonData();
   }, [id]);
 
-  const handleAddTransaction = () => {
+  const loadPersonData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !id) return;
+
+      // Load person data
+      const { data: personData, error: personError } = await supabase
+        .from('people')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('id', id)
+        .single();
+
+      if (personError) {
+        console.error('Error loading person:', personError);
+        setPerson(null);
+      } else {
+        setPerson({
+          id: personData.id,
+          name: personData.name,
+          balance: parseFloat(personData.balance.toString()),
+          lastTransaction: personData.updated_at,
+        });
+      }
+
+      // Load shared transactions
+      const { data: transactionData, error: transactionError } = await supabase
+        .from('shared_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('person_id', id)
+        .order('created_at', { ascending: false });
+
+      if (transactionError) {
+        console.error('Error loading transactions:', transactionError);
+      } else {
+        const mappedTransactions = (transactionData || []).map(t => ({
+          id: t.id,
+          personId: t.person_id,
+          amount: parseFloat(t.amount.toString()),
+          description: t.description,
+          date: t.date,
+          type: t.type as 'lent' | 'borrowed',
+          timestamp: t.created_at,
+        }));
+        setTransactions(mappedTransactions);
+      }
+    } catch (error) {
+      console.error('Error loading person data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddTransaction = async () => {
     if (!newAmount || !newDescription.trim() || !person) return;
 
-    const transaction: SharedTransaction = {
-      id: Date.now().toString(),
-      personId: person.id,
-      amount: parseFloat(newAmount),
-      description: newDescription.trim(),
-      date: new Date().toISOString().split('T')[0],
-      type: newType,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Update transactions
-    const allTransactions = JSON.parse(localStorage.getItem('sharedTransactions') || '[]');
-    allTransactions.push(transaction);
-    localStorage.setItem('sharedTransactions', JSON.stringify(allTransactions));
-    setTransactions([transaction, ...transactions]);
-
-    // Update person's balance
-    const people = JSON.parse(localStorage.getItem('people') || '[]');
-    const updatedPeople = people.map((p: Person) => {
-      if (p.id === person.id) {
-        const balanceChange = newType === 'lent' ? parseFloat(newAmount) : -parseFloat(newAmount);
-        return {
-          ...p,
-          balance: p.balance + balanceChange,
-          lastTransaction: new Date().toISOString(),
-        };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast({
+          title: "Authentication Error",
+          description: "Please sign in to add transactions",
+          variant: "destructive",
+        });
+        return;
       }
-      return p;
-    });
-    localStorage.setItem('people', JSON.stringify(updatedPeople));
-    
-    const updatedPerson = updatedPeople.find((p: Person) => p.id === person.id);
-    if (updatedPerson) setPerson(updatedPerson);
 
-    // Reset form
-    setNewAmount("");
-    setNewDescription("");
-    setShowAddForm(false);
+      const { error } = await supabase
+        .from('shared_transactions')
+        .insert({
+          user_id: user.id,
+          person_id: person.id,
+          amount: parseFloat(newAmount),
+          description: newDescription.trim(),
+          date: new Date().toISOString().split('T')[0],
+          type: newType,
+        });
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Transaction Added",
+        description: `${newType === 'lent' ? 'Lent' : 'Borrowed'} ₹${newAmount} recorded`,
+      });
+
+      // Reload data to get updated balance and transactions
+      await loadPersonData();
+
+      // Reset form
+      setNewAmount("");
+      setNewDescription("");
+      setShowAddForm(false);
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add transaction. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const formatCurrency = (amount: number) => {
@@ -117,6 +175,16 @@ const PersonDetail = () => {
     if (balance < 0) return "text-debt";
     return "text-muted-foreground";
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background px-6 pt-8">
+        <div className="text-center mt-20">
+          <div className="text-body text-foreground">Loading person...</div>
+        </div>
+      </div>
+    );
+  }
 
   if (!person) {
     return (

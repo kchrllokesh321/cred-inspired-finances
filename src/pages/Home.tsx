@@ -102,11 +102,22 @@ const Home = () => {
     });
   };
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) {
+      return "Good morning!";
+    } else if (hour >= 12 && hour < 18) {
+      return "Good afternoon!";
+    } else {
+      return "Good evening!";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background px-6 pt-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-title text-foreground mb-2">Good evening!</h1>
+        <h1 className="text-title text-foreground mb-2">{getGreeting()}</h1>
         <p className="text-subtext text-muted-foreground">Here's your financial overview</p>
       </div>
 

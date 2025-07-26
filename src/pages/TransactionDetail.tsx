@@ -28,13 +28,13 @@ const TransactionDetail = () => {
 
   const fetchTransaction = async () => {
     try {
-      const userId = localStorage.getItem('userId');
-      if (!userId || !id) return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !id) return;
 
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
-        .eq('user_id', userId)
+        .eq('user_id', user.id)
         .eq('id', id)
         .single();
 
@@ -208,10 +208,7 @@ const TransactionDetail = () => {
         <Button
           variant="clean"
           className="w-full"
-          onClick={() => {
-            // Edit functionality would go here
-            alert("Edit functionality coming soon!");
-          }}
+          onClick={() => navigate(`/edit-transaction/${transaction.id}`)}
         >
           <Edit className="h-4 w-4 mr-2" />
           Edit Transaction

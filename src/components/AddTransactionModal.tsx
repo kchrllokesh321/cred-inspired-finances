@@ -142,6 +142,7 @@ const AddTransactionModal = ({ isOpen, onClose, onTransactionAdded }: AddTransac
             <Input
               type="date"
               value={date}
+              max={new Date().toISOString().split('T')[0]}
               onChange={(e) => setDate(e.target.value)}
               className="pl-10 bg-background border-0 text-body"
             />
