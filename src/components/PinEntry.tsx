@@ -25,10 +25,16 @@ const PinEntry = ({ onSuccess }: PinEntryProps) => {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('pin_hash')
+        .select('pin_hash, pin_enabled')
         .eq('user_id', userId)
         .single();
 
+      // If PIN is disabled, skip PIN entry
+      if (profile?.pin_enabled === false) {
+        onSuccess();
+        return;
+      }
+      
       setIsFirstTime(!profile?.pin_hash);
     } catch (error) {
       console.error('Error checking profile:', error);

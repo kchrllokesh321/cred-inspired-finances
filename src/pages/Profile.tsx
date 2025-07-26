@@ -8,9 +8,34 @@ import { supabase } from "@/integrations/supabase/client";
 
 const Profile = () => {
   const [userName, setUserName] = useState(localStorage.getItem('userName') || 'User');
+  const [username, setUsername] = useState(localStorage.getItem('username') || '');
+  const [isPinEnabled, setIsPinEnabled] = useState(false);
   const [showPinDialog, setShowPinDialog] = useState(false);
   const [newPin, setNewPin] = useState("");
   const { toast } = useToast();
+
+  useState(() => {
+    checkPinStatus();
+  });
+
+  const checkPinStatus = async () => {
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('pin_enabled')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile) {
+        setIsPinEnabled(profile.pin_enabled || false);
+      }
+    } catch (error) {
+      console.error('Error checking PIN status:', error);
+    }
+  };
 
   const hashPin = async (pin: string): Promise<string> => {
     const encoder = new TextEncoder();
@@ -45,7 +70,8 @@ const Profile = () => {
         .from('profiles')
         .upsert({
           user_id: userId,
-          pin_hash: hashedPin
+          pin_hash: hashedPin,
+          pin_enabled: true
         });
 
       if (error) throw error;
@@ -144,8 +170,8 @@ const Profile = () => {
   const menuItems = [
     {
       icon: Lock,
-      title: "Set/Change PIN",
-      subtitle: "Secure your app with a PIN",
+      title: isPinEnabled ? "Change PIN" : "Set PIN",
+      subtitle: isPinEnabled ? "Update your PIN" : "Secure your app with a PIN",
       onClick: handleSetPin,
     },
     {
@@ -180,7 +206,7 @@ const Profile = () => {
           </div>
           <div>
             <div className="text-card text-foreground font-medium">{userName}</div>
-            <div className="text-subtext text-muted-foreground">Premium Member</div>
+            <div className="text-subtext text-muted-foreground">@{username}</div>
           </div>
         </div>
       </div>
@@ -230,14 +256,49 @@ const Profile = () => {
 
       {/* Security Info */}
       <div className="clean-sm rounded-2xl p-4 mb-8 bg-primary/5">
-        <div className="flex items-center">
-          <Shield className="h-5 w-5 text-primary mr-3" />
-          <div>
-            <div className="text-body text-foreground font-medium">Data Privacy</div>
-            <div className="text-subtext text-muted-foreground">
-              All your data is stored securely in the cloud
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <Shield className="h-5 w-5 text-primary mr-3" />
+            <div>
+              <div className="text-body text-foreground font-medium">PIN Protection</div>
+              <div className="text-subtext text-muted-foreground">
+                {isPinEnabled ? 'Your app is secured with a PIN' : 'PIN protection is disabled'}
+              </div>
             </div>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                const userId = localStorage.getItem('userId');
+                if (!userId) return;
+
+                const newStatus = !isPinEnabled;
+                const { error } = await supabase
+                  .from('profiles')
+                  .update({ pin_enabled: newStatus })
+                  .eq('user_id', userId);
+
+                if (error) throw error;
+
+                setIsPinEnabled(newStatus);
+                toast({
+                  title: newStatus ? "PIN Enabled" : "PIN Disabled",
+                  description: newStatus ? "Your app is now secured with a PIN" : "PIN protection has been disabled",
+                });
+              } catch (error) {
+                console.error('Error toggling PIN:', error);
+                toast({
+                  title: "Error",
+                  description: "Failed to update PIN setting",
+                  variant: "destructive",
+                });
+              }
+            }}
+          >
+            {isPinEnabled ? 'Disable' : 'Enable'}
+          </Button>
         </div>
       </div>
 
