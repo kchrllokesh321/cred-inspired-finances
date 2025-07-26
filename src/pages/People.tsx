@@ -24,13 +24,13 @@ const People = () => {
 
   const loadPeople = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
 
       const { data, error } = await supabase
         .from('people')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -57,13 +57,13 @@ const People = () => {
     if (!newPersonName.trim()) return;
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
 
       const { error } = await supabase
         .from('people')
         .insert({
-          user_id: user.id,
+          user_id: userId,
           name: newPersonName.trim(),
           balance: 0,
         });
