@@ -14,10 +14,6 @@ const Profile = () => {
   const [newPin, setNewPin] = useState("");
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkPinStatus();
-  }, []);
-
   const checkPinStatus = async () => {
     try {
       const userId = localStorage.getItem('userId');
@@ -36,6 +32,10 @@ const Profile = () => {
       console.error('Error checking PIN status:', error);
     }
   };
+
+  useEffect(() => {
+    checkPinStatus();
+  }, []);
 
   const hashPin = async (pin: string): Promise<string> => {
     const encoder = new TextEncoder();
